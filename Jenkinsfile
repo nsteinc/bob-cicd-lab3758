@@ -170,3 +170,4 @@ def askBob(String prompt, String mode = null) {
  sh "rm -f ${promptFile}"
  return analysis
  }
+}

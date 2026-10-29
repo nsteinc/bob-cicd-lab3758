@@ -94,8 +94,40 @@ spec:
         }
 
         // ── Lab 1: PR / Git Diff Review ──────────────────────────
-        //    Add a stage here that runs Bob in a "senior developer"
-        //    mode against the git diff. See labs/lab1/PR_REVIEW.md.
+        stage('PR Review') {
+            options {
+                timeout(time: 5, unit: 'MINUTES')
+            }
+            steps {
+                script {
+                    echo '════════════════════════════════════════════════════════'
+                    echo '  Bob PR Review'
+                    echo '════════════════════════════════════════════════════════'
+
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        sh '''
+                            git config --global --add safe.directory "$WORKSPACE"
+                            git diff origin/main...HEAD > git-diff.txt || : > git-diff.txt
+                        '''
+
+                        def analysis = askBob(
+                            "Read git-diff.txt and produce the senior-developer PR overview.",
+                            'pipeline-git-diff-overview'
+                        )
+
+                        echo analysis
+                        writeFile file: 'bob-pr-review.md', text: analysis
+                    }
+
+                    echo '════════════════════════════════════════════════════════'
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'bob-pr-review.md', allowEmptyArchive: true
+                }
+            }
+        }
 
         // ── Lab 2: Unit Testing ──────────────────────────────────
         //    Add a mvn test stage + Bob test-failure analysis.
